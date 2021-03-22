@@ -1,0 +1,33 @@
+[
+    {
+        "id": 1,
+        "keywords": [
+            "hola",
+            "palathea"
+        ],
+        "response": "Intent 1",
+        "type": "String"
+    },
+    {
+        "id": 1,
+        "keywords": [
+            "esto",
+            "prueba"
+        ],
+        "response": "Esto es una pruebita to fuerte",
+        "type": "String"
+    },
+    {
+        "id": 3,
+        "keywords": [
+            "haz",
+            "la",
+            "prueba",
+            "del",
+            "handler"
+        ],
+        "response": "Esta es la prueba: 12345",
+        "handler": "basicHandler",
+        "type": "String"
+    }
+]
