@@ -1,3 +1,3 @@
-const Assistant = require("./core/Assistant");
+import Assistant from "./core/Assistant.js";
 
-module.exports = Assistant;
+export default Assistant;
