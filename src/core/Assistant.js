@@ -1,3 +1,5 @@
+import Response from "./Response.js";
+
 /**
  * Basic Intent
  * @typedef {{
@@ -8,13 +10,11 @@
  *  }} Intent
  */
 
-module.exports = class Assistant {
+export default class Assistant {
   constructor(intents, handlers = null, dictionaries = null) {
     this.intents = intents;
     this.dictionaries = dictionaries;
     this.handlers = handlers;
-
-    this.middleware = [];
   }
 
   /**
@@ -34,14 +34,6 @@ module.exports = class Assistant {
   }
 
   /**
-   * Adds a function between basic execution and request processing. This enables the user to use any functions they want to modify the request.
-   * @param {Function} middleware Middleware function
-   */
-  use(middleware) {
-    this.middleware.push(middleware);
-  }
-
-  /**
    * Selects the correct intent based on a selected input.
    * @param {String} input Processed input ready to be splitted
    * @returns {{
@@ -50,30 +42,39 @@ module.exports = class Assistant {
    * }} Resultant intent
    *
    */
-  async reply(input) {
+  async reply(input, options = {}) {
     // Functions declaration
 
     /**
      * Rates an intent
-     * @param {String} input
-     * @param {Intent} intent
+     * @param {String} inputs
+     * @param {Intent} keyword
      * @returns {Integer} intent rating
      */
-    const rateKeyword = (inputs, option) => {
-      const MAX_HEAD_STOPS = 2;
+    const rateKeyword = (inputs, keyword) => {
       let bestRating = 0;
       for (const input of inputs) {
+
+        // If input has less than three letters, avoid stops.
+        // This is done to prevent simple words such as "to" or "get" to form part of a bigger word.
+        // Improves the quality of the response
+        const MAX_HEAD_STOPS = input.length > 3 ? 2 : 0;
+        // The same goes on with its value.
+        const LETTER_VALUE = input.length > 3 ? 1 : .25
+
         let rating = 0;
 
-        if (input !== option) {
+        // Checks if the current keyword and the input word are equal
+        // If it isn't, verify letter by letter how similar they are
+        if (input !== keyword) {
           let stillChecking = true;
           let headCheckPos = 0;
           let currentCharRating = 0;
 
-          if (input.length > option.length) {
-            for (let i = 0; i < option.length && stillChecking; i++) {
-              if (option[i - headCheckPos] === input[i]) {
-                currentCharRating++;
+          if (input.length > keyword.length) {
+            for (let i = 0; i < keyword.length && stillChecking; i++) {
+              if (keyword[i - headCheckPos] === input[i]) {
+                currentCharRating += LETTER_VALUE;
               } else {
                 if (headCheckPos < MAX_HEAD_STOPS) {
                   headCheckPos++;
@@ -88,8 +89,8 @@ module.exports = class Assistant {
             }
           } else {
             for (let i = 0; i < input.length; i++) {
-              if (input[i - headCheckPos] === option[i]) {
-                currentCharRating++;
+              if (input[i - headCheckPos] === keyword[i]) {
+                currentCharRating += LETTER_VALUE;
               } else {
                 if (headCheckPos < MAX_HEAD_STOPS) {
                   headCheckPos++;
@@ -100,11 +101,11 @@ module.exports = class Assistant {
             }
 
             if (stillChecking) {
-              rating = currentCharRating / option.length;
+              rating = currentCharRating / keyword.length;
             }
           }
         } else {
-          rating = 1;
+          rating = LETTER_VALUE;
         }
 
         if (rating > bestRating) {
@@ -124,33 +125,86 @@ module.exports = class Assistant {
      * }}
      */
     const checkHandlerAndExec = async (intent) => {
-      let result = {
-        type: intent.type,
-      };
+      const responseObj = new Response();
+      responseObj.setType(intent.type);
 
       if (intent.handler) {
-        result.response = await this.handlers[intent.handler](result);
+        this.handlers[intent.handler].bind(responseObj);
+        await this.handlers[intent.handler]({res: responseObj});
       } else {
-        result.response = intent.response;
+        responseObj.reply(intent.response);
       }
 
-      return result;
+      if(responseObj.response === "") {
+        responseObj.reply("Se ha producido un error")
+      }
+
+      responseObj.setIntentId(intent.id);
+
+      return responseObj;
+    };
+
+    const mapAndRate = (intent, splittedInput) => {
+      let bestRating = 0;
+      for (const keywordSet of intent.keywords) {
+        let newRating = keywordSet
+          .map((keyword) => rateKeyword(splittedInput, keyword))
+          .reduce((acc, rating) => acc + rating);
+
+        if (bestRating < newRating) {
+          bestRating = newRating;
+        }
+      }
+      return { intent, rating: bestRating };
+    }
+
+    const filterByReference = (intent) => {
+      let check = false;
+
+      if(typeof intent.references === "number") {
+        check = intent.references === latestQueryId;
+      } else if (intent.references) {
+        check = intent.references.indexOf(latestQueryId) !== -1;
+      }
+      
+      return check;
     };
 
     // Main method flow
+    const latestQueryId = parseInt(options.latestQuery);
+
     const preparedInput = this.prepare(input);
     const splittedInput = preparedInput.split(" ");
-    const ratedIntents = this.intents.map((intent) => {
-      return { intent, rating: intent.keywords.map(keyword => rateKeyword(splittedInput, keyword)).reduce((acc, rating) => acc + rating) };
-    });
 
-    let mostRatedIntent = ratedIntents.sort((a, b) => b.rating - a.rating)[0];
+    let ratedIntents = null;
+    let mostRatedIntent = null;
 
-    if (mostRatedIntent.rating < 0.4) {
+    // Check if latest intent has any children that references to it.
+    // In that case, children have priority over other intents.
+    if (latestQueryId && this.intents.filter(filterByReference).length) {
+      const filteredInputAfterSplit = splittedInput.filter(value => value.length > 1);
+
+      const filteredIntentsByReply = this.intents.filter(filterByReference);
+      const ratedReferencedIntents = filteredIntentsByReply.map((intent) => mapAndRate(intent, filteredInputAfterSplit));
+      const mostRatedReferencedIntent = ratedReferencedIntents.sort((a, b) => b.rating - a.rating)[0];
+
+      if (mostRatedReferencedIntent.rating < .5) {
+        ratedIntents = this.intents.filter((intent) => !intent.references).map((intent) => mapAndRate(intent, splittedInput));
+        mostRatedIntent = ratedIntents.sort((a, b) => b.rating - a.rating)[0];
+      } else {
+        mostRatedIntent = mostRatedReferencedIntent;
+      }
+    } else {
+      ratedIntents = this.intents.filter((intent) => !intent.references).map((intent) => mapAndRate(intent, splittedInput));
+      mostRatedIntent = ratedIntents.sort((a, b) => b.rating - a.rating)[0];
+    }
+
+    if (mostRatedIntent.rating < 0.35) {
       mostRatedIntent.intent = {
         id: 0,
         keywords: [],
-        response: "Didn't get it, could you say it again, please?",
+        response:
+          "Lo siento, no he logrado entenderte. ¿Podrías repetirlo de nuevo?",
         type: "Error",
       };
       mostRatedIntent.rating = 1;
