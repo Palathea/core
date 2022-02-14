@@ -40,7 +40,6 @@ export default class Assistant {
    *    type: String,
    *    response: String
    * }} Resultant intent
-   *
    */
   async reply(input, options = {}) {
     // Functions declaration
@@ -54,13 +53,12 @@ export default class Assistant {
     const rateKeyword = (inputs, keyword) => {
       let bestRating = 0;
       for (const input of inputs) {
-
         // If input has less than three letters, avoid stops.
         // This is done to prevent simple words such as "to" or "get" to form part of a bigger word.
         // Improves the quality of the response
         const MAX_HEAD_STOPS = input.length > 3 ? 2 : 0;
         // The same goes on with its value.
-        const LETTER_VALUE = input.length > 3 ? 1 : .25
+        const LETTER_VALUE = input.length > 3 ? 1 : .25;
 
         let rating = 0;
 
@@ -130,13 +128,13 @@ export default class Assistant {
 
       if (intent.handler) {
         this.handlers[intent.handler].bind(responseObj);
-        await this.handlers[intent.handler]({res: responseObj});
+        await this.handlers[intent.handler]({ res: responseObj });
       } else {
         responseObj.reply(intent.response);
       }
 
-      if(responseObj.response === "") {
-        responseObj.reply("Se ha producido un error")
+      if (responseObj.response === "") {
+        responseObj.reply("Se ha producido un error");
       }
 
       responseObj.setIntentId(intent.id);
@@ -156,17 +154,17 @@ export default class Assistant {
         }
       }
       return { intent, rating: bestRating };
-    }
+    };
 
     const filterByReference = (intent) => {
       let check = false;
 
-      if(typeof intent.references === "number") {
+      if (typeof intent.references === "number") {
         check = intent.references === latestQueryId;
       } else if (intent.references) {
         check = intent.references.indexOf(latestQueryId) !== -1;
       }
-      
+
       return check;
     };
 
@@ -182,20 +180,30 @@ export default class Assistant {
     // Check if latest intent has any children that references to it.
     // In that case, children have priority over other intents.
     if (latestQueryId && this.intents.filter(filterByReference).length) {
-      const filteredInputAfterSplit = splittedInput.filter(value => value.length > 1);
+      const filteredInputAfterSplit = splittedInput.filter((value) =>
+        value.length > 1
+      );
 
       const filteredIntentsByReply = this.intents.filter(filterByReference);
-      const ratedReferencedIntents = filteredIntentsByReply.map((intent) => mapAndRate(intent, filteredInputAfterSplit));
-      const mostRatedReferencedIntent = ratedReferencedIntents.sort((a, b) => b.rating - a.rating)[0];
+      const ratedReferencedIntents = filteredIntentsByReply.map((intent) =>
+        mapAndRate(intent, filteredInputAfterSplit)
+      );
+      const mostRatedReferencedIntent = ratedReferencedIntents.sort((a, b) =>
+        b.rating - a.rating
+      )[0];
 
       if (mostRatedReferencedIntent.rating < .5) {
-        ratedIntents = this.intents.filter((intent) => !intent.references).map((intent) => mapAndRate(intent, splittedInput));
+        ratedIntents = this.intents.filter((intent) => !intent.references).map((
+          intent,
+        ) => mapAndRate(intent, splittedInput));
         mostRatedIntent = ratedIntents.sort((a, b) => b.rating - a.rating)[0];
       } else {
         mostRatedIntent = mostRatedReferencedIntent;
       }
     } else {
-      ratedIntents = this.intents.filter((intent) => !intent.references).map((intent) => mapAndRate(intent, splittedInput));
+      ratedIntents = this.intents.filter((intent) => !intent.references).map((
+        intent,
+      ) => mapAndRate(intent, splittedInput));
       mostRatedIntent = ratedIntents.sort((a, b) => b.rating - a.rating)[0];
     }
 
@@ -214,4 +222,4 @@ export default class Assistant {
 
     return finalResponse;
   }
-};
+}
