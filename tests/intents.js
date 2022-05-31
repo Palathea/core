@@ -1,4 +1,15 @@
 export default {
+  whatsYourName: {
+    keywords: [
+      ["como", "te", "llamas"],
+      ["cual", "es", "tu", "nombre"]
+    ],
+    responses: [
+      "Mi nombre es Palathea, encantada de conocerte",
+      "Me llamo Palathea. Encantada!"
+    ],
+    type: "string"
+  },
   greeting: {
     keywords: [
       ["buenos", "dias"],
@@ -23,6 +34,9 @@ export default {
           ["podrias", "contarme", "chiste"]
       ],
       handler: "jokeHandler",
+      responses: [
+        "Van dos y se cae el del medio"
+      ],
       type: "string"
   },
   thanks: {
@@ -42,7 +56,9 @@ export default {
           ["cuentame", "curiosidad"],
           ["cuentame", "algo", "interesante"]
       ],
+      references: ["interestingFact"],
       handler: "interestingFactHandler",
       type: "string"
-  }
+  },
+  fallback: "No lo he entendido. Podrías repetirlo de nuevo?"
 };

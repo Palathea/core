@@ -8,9 +8,15 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "node tests/index.js"
+    "test": "vitest --run --coverage"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "vitest": "0.13.0"
+  },
+  "devDependencies": {
+    "c8": "7.11.3"
+  }
 }

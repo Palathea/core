@@ -1,4 +1,8 @@
-import { MAX_HEAD_FAILS } from "./constants.js";
+import {
+  MAX_HEAD_RETRIES,
+  FALLBACK_RESPONSE,
+  MINIMUM_RATING,
+} from "./utils/constants.js";
 
 /**
  * A basic intent
@@ -32,8 +36,6 @@ const prepareInput = (input, options) => {
  * @param {string} keyword
  */
 const rateKeyword = (word, keyword) => {
-  const MAX_HEAD_RETRIES = 2;
-
   if (word === keyword) return 1;
 
   let currentRetries = 0;
@@ -46,7 +48,7 @@ const rateKeyword = (word, keyword) => {
     } else points++;
   }
 
-  return points / word.length;
+  return points / (word.length * (word.length < 3 ? 10 : 1));
 };
 
 /**
@@ -55,37 +57,42 @@ const rateKeyword = (word, keyword) => {
  * @param {Array<Intent>} intents
  * @returns {Array}
  */
-const guessIntent = (preparedInput, intents) => {
-  let ratedIntents = [];
+const guessIntent = (preparedInput, intents) =>
+  intents
+    .map(({ keywords: keywordsSets, id }) => ({
+      id,
+      rating: keywordsSets.reduce((highestRating, keywords) => {
+        const rating =
+          preparedInput.reduce((totalInputRating, word) => {
+            return (
+              totalInputRating +
+              keywords.reduce((totalKeywordRating, keyword) => {
+                return totalKeywordRating + rateKeyword(word, keyword);
+              }, 0)
+            );
+          }, 0) / preparedInput.length;
 
-  intents.forEach(({ keywords: keywordsSets, id }) => {
-    let ratedIntent = { rating: 0, id };
+        return highestRating < rating
+          ? parseFloat(rating.toFixed(6))
+          : highestRating;
+      }, 0),
+    }))
+    .sort((a, b) => b.rating - a.rating);
 
-    keywordsSets.forEach((keywords) => {
-      const rating =
-        preparedInput.reduce((totalInputRating, word) => {
-          return (
-            totalInputRating +
-            keywords.reduce((totalKeywordRating, keyword) => {
-              return totalKeywordRating + rateKeyword(word, keyword);
-            }, 0)
-          );
-        }, 0) / preparedInput.length;
+/**
+ *  Initializes Palathea
+ *  @param {Object} intents
+ *  @param {Object} handlers
+ */
+const initialize = (intents, handlers) => {
+  let previousIntent = null;
 
-      if (ratedIntent.rating < rating) ratedIntent.rating = rating;
-    });
-
-    ratedIntents.push(ratedIntent);
-  });
-
-  return ratedIntents;
-};
-
-export default (intents, handlers) => {
-  const mappedIntents = Object.entries(intents).map(([id, content]) => ({
-    ...content,
-    id,
-  }));
+  const mappedIntents = Object.entries(intents)
+    .filter(([id, content]) => id !== "fallback")
+    .map(([id, content]) => ({
+      ...content,
+      id,
+    }));
 
   return {
     /**
@@ -97,15 +104,32 @@ export default (intents, handlers) => {
       const formattedInput = prepareInput(input);
       const ratedIntents = guessIntent(formattedInput, mappedIntents);
 
-      const mostRatedIntent = ratedIntents[0];
+      const mostRatedIntent = ratedIntents.at(0);
 
-      console.log(ratedIntents)
+      if (mostRatedIntent.rating < MINIMUM_RATING)
+        return intents.fallback ?? FALLBACK_RESPONSE;
 
-      const generatedResponse = intents[mostRatedIntent.id]
-        ? handlers[intents[mostRatedIntent.id].handler]()
-        : intents[mostRatedIntent.id];
+      previousIntent = mostRatedIntent.id;
 
-      return generatedResponse;
+      if (intents[mostRatedIntent.id].handler) {
+        try {
+          return handlers[intents[mostRatedIntent.id].handler]();
+        } catch (err) {
+          console.log("An error has occured while trying to execute a handler");
+        }
+      }
+
+      if (intents[mostRatedIntent.id].responses) {
+        const selectedIntent = intents[mostRatedIntent.id];
+
+        return {
+          type: selectedIntent.type,
+          content: selectedIntent.responses.at(0),
+        };
+      }
     },
+    getPreviousIntent: () => previousIntent
   };
 };
+
+export default initialize;
