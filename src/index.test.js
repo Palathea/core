@@ -1,6 +1,8 @@
 import palathea from "./index.js";
 import intents from "../tests/intents.js";
 import handlers from "../tests/handlers.js";
+import { FALLBACK_RESPONSE } from "./utils/constants.js";
+
 import { describe, expect, test } from "vitest";
 
 describe("Palathea", () => {
@@ -35,13 +37,22 @@ describe("Palathea", () => {
   });
 
   describe("replies with a fallback response", () => {
-    const assistant = palathea(intents, handlers);
+    test("when there is not a valid enough response but a custom fallback response", () => {
+      const assistant = palathea(intents, handlers);
 
-    test("when there is not a valid enough response", () => {
       const input = "No, me gusta hacer muchas cosas";
       const result = assistant.reply(input);
 
       expect(result).toStrictEqual(intents.fallback);
+    });
+
+    test("when there is not a valid enough response nor custom fallback response", () => {
+        const assistant = palathea({...intents, fallback: null}, handlers);
+
+      const input = "No, me gusta hacer muchas cosas";
+      const result = assistant.reply(input);
+
+      expect(result).toStrictEqual(FALLBACK_RESPONSE)
     });
   });
 
