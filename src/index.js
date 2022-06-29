@@ -100,7 +100,7 @@ const initialize = (intents, handlers) => {
      * @param {String} input A valid input
      * @returns {Object}
      */
-    reply: (input) => {
+    reply: async (input) => {
       const formattedInput = prepareInput(input);
       const ratedIntents = guessIntent(formattedInput, mappedIntents);
 
@@ -128,7 +128,7 @@ const initialize = (intents, handlers) => {
         };
       }
     },
-    getPreviousIntent: () => previousIntent
+    getPreviousIntent: () => previousIntent,
   };
 };
 
