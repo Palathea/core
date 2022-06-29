@@ -43,7 +43,10 @@ describe("Palathea", () => {
       const input = "No, me gusta hacer muchas cosas";
       const result = await assistant.reply(input);
 
-      expect(result).toStrictEqual(intents.fallback);
+      expect(result).toStrictEqual({
+        type: "error",
+        content: intents.fallback,
+      });
     });
 
     test("when there is not a valid enough response nor custom fallback response", async () => {
@@ -52,7 +55,10 @@ describe("Palathea", () => {
       const input = "No, me gusta hacer muchas cosas";
       const result = await assistant.reply(input);
 
-      expect(result).toStrictEqual(FALLBACK_RESPONSE);
+      expect(result).toStrictEqual({
+        type: "error",
+        content: FALLBACK_RESPONSE,
+      });
     });
   });
 
