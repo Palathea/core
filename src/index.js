@@ -106,8 +106,14 @@ const initialize = (intents, handlers) => {
 
       const mostRatedIntent = ratedIntents.at(0);
 
-      if (mostRatedIntent.rating < MINIMUM_RATING)
-        return intents.fallback ?? FALLBACK_RESPONSE;
+      if (mostRatedIntent.rating < MINIMUM_RATING) {
+        const fallbackResponse = intents.fallback ?? FALLBACK_RESPONSE;
+
+        return {
+          type: "error",
+          content: fallbackResponse,
+        };
+      }
 
       previousIntent = mostRatedIntent.id;
 
