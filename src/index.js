@@ -4,6 +4,8 @@ import {
   MINIMUM_RATING,
 } from "./utils/constants.js";
 
+import handlerWrapper from "./wrappers/handlerWrapper.js";
+
 /**
  * A basic intent
  * @typedef {Object} Intent
@@ -119,8 +121,11 @@ const initialize = (intents, handlers) => {
 
       if (intents[mostRatedIntent.id].handler) {
         try {
-          return await handlers[intents[mostRatedIntent.id].handler]();
+          return await handlerWrapper(
+            handlers[intents[mostRatedIntent.id].handler]
+          );
         } catch (err) {
+          console.log(err);
           console.log("An error has occured while trying to execute a handler");
         }
       }

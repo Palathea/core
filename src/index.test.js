@@ -1,6 +1,8 @@
 import palathea from "./index.js";
 import intents from "../tests/intents.js";
 import handlers from "../tests/handlers.js";
+
+import handlerWrapper from "./wrappers/handlerWrapper.js";
 import { FALLBACK_RESPONSE } from "./utils/constants.js";
 
 import { describe, expect, test } from "vitest";
@@ -16,11 +18,13 @@ describe("Palathea", () => {
       expect(intents.whatsYourName.responses).to.include(result.content);
     });
 
-    test("from an intent with a handler", async () => {
+    test.only("from an intent with a handler", async () => {
       const input = "Buenas noches Palathea";
       const result = await assistant.reply(input);
 
-      expect(result).toStrictEqual(handlers[intents.greeting.handler]());
+      expect(result).toStrictEqual(
+        await handlerWrapper(handlers[intents.greeting.handler])
+      );
     });
 
     test("from an intent simple response after failing to execute its handler", async () => {

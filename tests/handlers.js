@@ -1,8 +1,5 @@
 export default {
-  greetingHandler: () => {
-    return {
-      type: "string",
-      response: "Buenas noches",
-    };
+  greetingHandler: (res) => {
+    res.reply("Buenas noches");
   },
 };
