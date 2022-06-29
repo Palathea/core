@@ -113,7 +113,7 @@ const initialize = (intents, handlers) => {
 
       if (intents[mostRatedIntent.id].handler) {
         try {
-          return handlers[intents[mostRatedIntent.id].handler]();
+          return await handlers[intents[mostRatedIntent.id].handler]();
         } catch (err) {
           console.log("An error has occured while trying to execute a handler");
         }

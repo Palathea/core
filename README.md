@@ -9,7 +9,7 @@ It is possible to add Palathea Core to any of your projects following the requir
 First of all, it is necessary to add Palathea organization to your `.npmrc` repository config. You can do this by adding the following line to the existing file:
 
 ```npmrc
-@palathea:registry=https://registry.npmjs.org/
+@palathea:registry=https://npm.pkg.github.com
 ```
 
 After adding this organization to the `.npmrc` file, execute the following command:
