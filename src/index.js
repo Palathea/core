@@ -1,3 +1,4 @@
+import stringSimilarity from "string-similarity-js";
 import {
   MAX_HEAD_RETRIES,
   FALLBACK_RESPONSE,
@@ -29,7 +30,7 @@ const prepareInput = (input, options) => {
   const cleanedUpInput = signReplacedInput.replace(/ +/g, " ");
   const finalInput = cleanedUpInput.split(" ");
 
-  return finalInput;
+  return cleanedUpInput;
 };
 
 /**
@@ -64,15 +65,7 @@ const guessIntent = (preparedInput, intents) =>
     .map(({ keywords: keywordsSets, id }) => ({
       id,
       rating: keywordsSets.reduce((highestRating, keywords) => {
-        const rating =
-          preparedInput.reduce((totalInputRating, word) => {
-            return (
-              totalInputRating +
-              keywords.reduce((totalKeywordRating, keyword) => {
-                return totalKeywordRating + rateKeyword(word, keyword);
-              }, 0)
-            );
-          }, 0) / preparedInput.length;
+        const rating = stringSimilarity(preparedInput, keywords.join(" "))
 
         return highestRating < rating
           ? parseFloat(rating.toFixed(6))

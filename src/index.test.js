@@ -18,7 +18,7 @@ describe("Palathea", () => {
       expect(intents.whatsYourName.responses).to.include(result.content);
     });
 
-    test.only("from an intent with a handler", async () => {
+    test("from an intent with a handler", async () => {
       const input = "Buenas noches Palathea";
       const result = await assistant.reply(input);
 
@@ -44,7 +44,7 @@ describe("Palathea", () => {
     test("when there is not a valid enough response but a custom fallback response", async () => {
       const assistant = palathea(intents, handlers);
 
-      const input = "No, me gusta hacer muchas cosas";
+      const input = "hjihojp`pasààòn4adnasmdaskmldlaskndlaksmdlkansdlkanmsd";
       const result = await assistant.reply(input);
 
       expect(result).toStrictEqual({
@@ -56,7 +56,7 @@ describe("Palathea", () => {
     test("when there is not a valid enough response nor custom fallback response", async () => {
       const assistant = palathea({ ...intents, fallback: null }, handlers);
 
-      const input = "No, me gusta hacer muchas cosas";
+      const input = "hjihojp`pasààòn4adnasmdaskmldlaskndlaksmdlkansdlkanmsd";
       const result = await assistant.reply(input);
 
       expect(result).toStrictEqual({
