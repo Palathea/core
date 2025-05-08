@@ -10,7 +10,7 @@ const handlerWrapper = async (handler) => {
         content,
         ...options,
       };
-    },
+    }
   };
 
   await handler(res);

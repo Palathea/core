@@ -21,14 +21,13 @@ import handlerWrapper from "./wrappers/handlerWrapper.js";
  * @param {String} input
  * @returns {Array<String>}
  */
-const prepareInput = (input, options) => {
+const formatToStandard = (input) => {
   const lowcaseInput = input.toString().toLowerCase();
   const accentReplacedInput = lowcaseInput
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
   const signReplacedInput = accentReplacedInput.replace(/(?![a-z ])./g, "");
   const cleanedUpInput = signReplacedInput.replace(/ +/g, " ");
-  const finalInput = cleanedUpInput.split(" ");
 
   return cleanedUpInput;
 };
@@ -39,14 +38,17 @@ const prepareInput = (input, options) => {
  * @param {Array<Intent>} intents
  * @returns {Array}
  */
-const guessIntent = (preparedInput, intents) =>
+const guessIntent = (preparedInput, intents, previousIntent) =>
   intents
-    .map(({ keywords: keywordsSets, id }) => ({
+    .map(({ keywords: keywordsSets, id, references }) => ({
       id,
       rating: keywordsSets.reduce((highestRating, keywords) => {
         const referenceString = typeof keywords === "string" ? keywords : keywords.join(" ")
-        const parsedReferenceString = prepareInput(referenceString)
+        const parsedReferenceString = formatToStandard(referenceString)
         const rating = stringSimilarity(preparedInput, parsedReferenceString)
+        
+        if(previousIntent && references.includes(previousIntent))
+          rating += .1
 
         return highestRating < rating
           ? parseFloat(rating.toFixed(6))
@@ -77,8 +79,8 @@ const initialize = (intents, handlers) => {
      * @returns {Object}
      */
     reply: async (input) => {
-      const formattedInput = prepareInput(input);
-      const ratedIntents = guessIntent(formattedInput, mappedIntents);
+      const formattedInput = formatToStandard(input);
+      const ratedIntents = guessIntent(formattedInput, mappedIntents, previousIntent);
 
       const mostRatedIntent = ratedIntents.at(0);
 
