@@ -47,7 +47,7 @@ const guessIntent = (preparedInput, intents, previousIntent) =>
         const parsedReferenceString = formatToStandard(referenceString)
         const rating = stringSimilarity(preparedInput, parsedReferenceString)
         
-        if(previousIntent && references.includes(previousIntent))
+        if(previousIntent && references?.includes(previousIntent))
           rating += .1
 
         return highestRating < rating
