@@ -139,6 +139,7 @@ const initialize = (intents, handlers, dictionaries = {}) => {
         try {
           return await handlerWrapper(
             handlers[intents[mostRatedIntent.id].handler],
+            context
           );
         } catch (err) {
           console.log("An error has occured while trying to execute a handler");

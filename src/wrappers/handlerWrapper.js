@@ -1,6 +1,6 @@
 import { FALLBACK_RESPONSE } from "../utils/constants.js";
 
-const handlerWrapper = async (handler) => {
+const handlerWrapper = async (handler, context) => {
   let finalResponse = {};
 
   const res = {
@@ -13,7 +13,7 @@ const handlerWrapper = async (handler) => {
     }
   };
 
-  await handler(res);
+  await handler(res, context);
 
   return finalResponse;
 };
