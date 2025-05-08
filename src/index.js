@@ -108,7 +108,7 @@ const initialize = (intents, handlers) => {
 
         return {
           type: selectedIntent.type,
-          content: selectedIntent.responses.at(0),
+          content: selectedIntent.responses.at(Math.floor(Math.random() * selectedIntent.responses.length)),
         };
       }
 
