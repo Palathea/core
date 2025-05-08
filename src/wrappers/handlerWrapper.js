@@ -4,7 +4,7 @@ const handlerWrapper = async (handler) => {
   let finalResponse = {};
 
   const res = {
-    reply: (content = "", options) => {
+    reply: (content = "", options = { type: "string" }) => {
       finalResponse = {
         ...FALLBACK_RESPONSE,
         content,
@@ -15,7 +15,6 @@ const handlerWrapper = async (handler) => {
 
   await handler(res);
 
-  console.log(finalResponse);
   return finalResponse;
 };
 

@@ -34,27 +34,6 @@ const prepareInput = (input, options) => {
 };
 
 /**
- * Rates a keyword based on an specified word
- * @param {string} word
- * @param {string} keyword
- */
-const rateKeyword = (word, keyword) => {
-  if (word === keyword) return 1;
-
-  let currentRetries = 0;
-  let points = 0;
-
-  for (let i = 0; i < word.length && currentRetries < MAX_HEAD_RETRIES; i++) {
-    if (word[i] !== keyword[i + currentRetries]) {
-      i--;
-      currentRetries++;
-    } else points++;
-  }
-
-  return points / (word.length * (word.length < 3 ? 10 : 1));
-};
-
-/**
  *
  * @param {Array<string>} preparedInput
  * @param {Array<Intent>} intents
@@ -65,7 +44,9 @@ const guessIntent = (preparedInput, intents) =>
     .map(({ keywords: keywordsSets, id }) => ({
       id,
       rating: keywordsSets.reduce((highestRating, keywords) => {
-        const rating = stringSimilarity(preparedInput, keywords.join(" "))
+        const referenceString = typeof keywords === "string" ? keywords : keywords.join(" ")
+        const parsedReferenceString = prepareInput(referenceString)
+        const rating = stringSimilarity(preparedInput, parsedReferenceString)
 
         return highestRating < rating
           ? parseFloat(rating.toFixed(6))
@@ -83,7 +64,7 @@ const initialize = (intents, handlers) => {
   let previousIntent = null;
 
   const mappedIntents = Object.entries(intents)
-    .filter(([id, content]) => id !== "fallback")
+    .filter(([id]) => id !== "fallback")
     .map(([id, content]) => ({
       ...content,
       id,
@@ -118,7 +99,6 @@ const initialize = (intents, handlers) => {
             handlers[intents[mostRatedIntent.id].handler]
           );
         } catch (err) {
-          console.log(err);
           console.log("An error has occured while trying to execute a handler");
         }
       }
@@ -130,6 +110,11 @@ const initialize = (intents, handlers) => {
           type: selectedIntent.type,
           content: selectedIntent.responses.at(0),
         };
+      }
+
+      return {
+        type: "error",
+        content: intents.fallback
       }
     },
     getPreviousIntent: () => previousIntent,

@@ -1,8 +1,8 @@
 export default {
   whatsYourName: {
     keywords: [
-      ["como", "te", "llamas"],
-      ["cual", "es", "tu", "nombre"]
+      "Cómo te llamas?",
+      "cual es tu nombre"
     ],
     responses: [
       "Mi nombre es Palathea, encantada de conocerte",
@@ -41,9 +41,8 @@ export default {
   },
   thanks: {
       keywords: [
-          ["gracias", "palathea"],
-          ["muchas", "gracias", "palathea"],
-          ["muchas", "gracias"]
+          "gracias palathea",
+          "muchas gracias palathea"
       ],
       responses: [
         "No hay de qué",
@@ -53,8 +52,8 @@ export default {
   },
   interestinFact: {
       keywords: [
-          ["cuentame", "curiosidad"],
-          ["cuentame", "algo", "interesante"]
+        "cuentame una curiosidad",
+        "cuentame algo interesante"
       ],
       references: ["interestingFact"],
       handler: "interestingFactHandler",
