@@ -10,6 +10,17 @@ export default {
     ],
     type: "string"
   },
+  whatDayIsIt: {
+    categories: ["daysOfTheWeek"],
+    keywords: ["Qué día de la semana es el miércoles?"],
+    type: "string",
+    responses: ["Test"]
+  },
+  whatDayIsNot: {
+    keywords: ["Qué día de la semana es el miércoles?"],
+    type: "string",
+    responses: ["This is not a test"]
+  },
   greeting: {
     keywords: [
       ["buenos", "dias"],

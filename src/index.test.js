@@ -1,6 +1,7 @@
 import palathea from "./index.js";
 import intents from "../tests/intents.js";
 import handlers from "../tests/handlers.js";
+import dictionaries from "../tests/dictionaries.js";
 
 import handlerWrapper from "./wrappers/handlerWrapper.js";
 import { FALLBACK_RESPONSE } from "./utils/constants.js";
@@ -9,7 +10,7 @@ import { describe, expect, test } from "vitest";
 
 describe("Palathea", () => {
   describe("is able to reply with a valid response", () => {
-    const assistant = palathea(intents, handlers);
+    const assistant = palathea(intents, handlers, dictionaries);
 
     test("from an intent with simple responses", async () => {
       const input = "Cómo te llamas?";
@@ -23,8 +24,15 @@ describe("Palathea", () => {
       const result = await assistant.reply(input);
 
       expect(result).toStrictEqual(
-        await handlerWrapper(handlers[intents.greeting.handler])
+        await handlerWrapper(handlers[intents.greeting.handler]),
       );
+    });
+
+    test("from an intent with context", async () => {
+      const input = "Qué día es el lunes?";
+      const result = await assistant.reply(input);
+
+      expect(intents.whatDayIsIt.responses).to.include(result.content);
     });
 
     test("from an intent simple response after failing to execute its handler", async () => {

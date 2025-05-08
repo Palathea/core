@@ -1,11 +1,12 @@
 import stringSimilarity from "string-similarity-js";
 import {
-  MAX_HEAD_RETRIES,
   FALLBACK_RESPONSE,
+  MAX_HEAD_RETRIES,
   MINIMUM_RATING,
 } from "./utils/constants.js";
 
 import handlerWrapper from "./wrappers/handlerWrapper.js";
+import _ from "lodash";
 
 /**
  * A basic intent
@@ -17,7 +18,6 @@ import handlerWrapper from "./wrappers/handlerWrapper.js";
  */
 
 /**
- *
  * @param {String} input
  * @returns {Array<String>}
  */
@@ -33,23 +33,26 @@ const formatToStandard = (input) => {
 };
 
 /**
- *
  * @param {Array<string>} preparedInput
  * @param {Array<Intent>} intents
  * @returns {Array}
  */
-const guessIntent = (preparedInput, intents, previousIntent) =>
+const guessIntent = (preparedInput, intents, previousIntent, context) =>
   intents
-    .map(({ keywords: keywordsSets, id, references }) => ({
+    .map(({ keywords: keywordsSets, id, references, categories }) => ({
       id,
       rating: keywordsSets.reduce((highestRating, keywords) => {
-        const referenceString = typeof keywords === "string" ? keywords : keywords.join(" ")
-        const parsedReferenceString = formatToStandard(referenceString)
-        
-        let rating = stringSimilarity(preparedInput, parsedReferenceString)
-        
-        if(previousIntent && references?.includes(previousIntent))
-          rating += .1
+        const categoriesRating = _.intersection(context.categories, categories).length * 0.02
+        const referenceString = typeof keywords === "string"
+          ? keywords
+          : keywords.join(" ");
+        const parsedReferenceString = formatToStandard(referenceString);
+
+        let rating = stringSimilarity(preparedInput, parsedReferenceString) + categoriesRating;
+
+        if (previousIntent && references?.includes(previousIntent)) {
+          rating += .1;
+        }
 
         return highestRating < rating
           ? parseFloat(rating.toFixed(6))
@@ -59,11 +62,39 @@ const guessIntent = (preparedInput, intents, previousIntent) =>
     .sort((a, b) => b.rating - a.rating);
 
 /**
+ * @param {string} input
+ * @param {object} dictionaries
+ */
+const getContext = (input, dictionaries) => {
+  const splittedInput = input.split(" ");
+  const context = {
+    relatedCategories: [],
+    tokens: {},
+  };
+
+  const entries = Object.entries(dictionaries).map(([entryName, tokens]) =>
+    tokens.map((token) => ({ entryName, value: token }))
+  ).flat();
+
+  for (const { entryName, value } of entries) {
+    for (const inputToken of splittedInput) {
+      if (stringSimilarity(inputToken, value) > 0.8) {
+        context.tokens[entryName] = [...context.tokens[entryName] ? context.tokens[entryName] : [], value]
+      }
+    }
+  }
+
+  context.relatedCategories = Object.keys(context.tokens)
+
+  return context;
+};
+
+/**
  *  Initializes Palathea
  *  @param {Object} intents
  *  @param {Object} handlers
  */
-const initialize = (intents, handlers) => {
+const initialize = (intents, handlers, dictionaries = {}) => {
   let previousIntent = null;
 
   const mappedIntents = Object.entries(intents)
@@ -81,7 +112,15 @@ const initialize = (intents, handlers) => {
      */
     reply: async (input) => {
       const formattedInput = formatToStandard(input);
-      const ratedIntents = guessIntent(formattedInput, mappedIntents, previousIntent);
+
+      const context = getContext(formattedInput, dictionaries);
+
+      const ratedIntents = guessIntent(
+        formattedInput,
+        mappedIntents,
+        previousIntent,
+        context
+      );
 
       const mostRatedIntent = ratedIntents.at(0);
 
@@ -99,7 +138,7 @@ const initialize = (intents, handlers) => {
       if (intents[mostRatedIntent.id].handler) {
         try {
           return await handlerWrapper(
-            handlers[intents[mostRatedIntent.id].handler]
+            handlers[intents[mostRatedIntent.id].handler],
           );
         } catch (err) {
           console.log("An error has occured while trying to execute a handler");
@@ -111,14 +150,16 @@ const initialize = (intents, handlers) => {
 
         return {
           type: selectedIntent.type,
-          content: selectedIntent.responses.at(Math.floor(Math.random() * selectedIntent.responses.length)),
+          content: selectedIntent.responses.at(
+            Math.floor(Math.random() * selectedIntent.responses.length),
+          ),
         };
       }
 
       return {
         type: "error",
-        content: intents.fallback
-      }
+        content: intents.fallback,
+      };
     },
     getPreviousIntent: () => previousIntent,
   };
