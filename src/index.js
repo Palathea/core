@@ -45,7 +45,8 @@ const guessIntent = (preparedInput, intents, previousIntent) =>
       rating: keywordsSets.reduce((highestRating, keywords) => {
         const referenceString = typeof keywords === "string" ? keywords : keywords.join(" ")
         const parsedReferenceString = formatToStandard(referenceString)
-        const rating = stringSimilarity(preparedInput, parsedReferenceString)
+        
+        let rating = stringSimilarity(preparedInput, parsedReferenceString)
         
         if(previousIntent && references?.includes(previousIntent))
           rating += .1
