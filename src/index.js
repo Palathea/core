@@ -42,13 +42,15 @@ const guessIntent = (preparedInput, intents, previousIntent, context) =>
     .map(({ keywords: keywordsSets, id, references, categories }) => ({
       id,
       rating: keywordsSets.reduce((highestRating, keywords) => {
-        const categoriesRating = _.intersection(context.categories, categories).length * 0.02
+        const categoriesRating =
+          _.intersection(context.categories, categories).length * 0.02;
         const referenceString = typeof keywords === "string"
           ? keywords
           : keywords.join(" ");
         const parsedReferenceString = formatToStandard(referenceString);
 
-        let rating = stringSimilarity(preparedInput, parsedReferenceString) + categoriesRating;
+        let rating = stringSimilarity(preparedInput, parsedReferenceString) +
+          categoriesRating;
 
         if (previousIntent && references?.includes(previousIntent)) {
           rating += .1;
@@ -79,15 +81,22 @@ const getContext = (input, dictionaries) => {
   for (const { entryName, value } of entries) {
     for (const [index, inputToken] of splittedInput.entries()) {
       const valueLength = value.split(/ +/g).length;
-      const fullToken = splittedInput.slice(index, valueLength+index).join(" ");
-      
-      if (stringSimilarity(fullToken, formatToStandard(value)) > 0.8) {
-        context.tokens[entryName] = [...context.tokens[entryName] ? context.tokens[entryName] : [], value]
+      const fullToken = splittedInput.slice(index, valueLength + index).join(
+        " ",
+      );
+
+      const rating = stringSimilarity(fullToken, formatToStandard(value));
+
+      if (rating > 0.85) {
+        context.tokens[entryName] = [
+          ...context.tokens[entryName] ? context.tokens[entryName] : [],
+          { value: value, rating },
+        ];
       }
     }
   }
 
-  context.relatedCategories = Object.keys(context.tokens)
+  context.relatedCategories = Object.keys(context.tokens);
 
   return context;
 };
@@ -122,7 +131,7 @@ const initialize = (intents, handlers, dictionaries = {}) => {
         formattedInput,
         mappedIntents,
         previousIntent,
-        context
+        context,
       );
 
       const mostRatedIntent = ratedIntents.at(0);
@@ -142,7 +151,7 @@ const initialize = (intents, handlers, dictionaries = {}) => {
         try {
           return await handlerWrapper(
             handlers[intents[mostRatedIntent.id].handler],
-            context
+            context,
           );
         } catch (err) {
           console.log("An error has occured while trying to execute a handler");

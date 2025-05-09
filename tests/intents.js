@@ -78,5 +78,24 @@ export default {
       handler: "interestingFactHandler",
       type: "string"
   },
+  jokeFollowingTest: {
+    references: ["joke"],
+    keywords: ["cuentame otro"],
+    type: "string",
+    responses: ["otro chiste"]
+  },
+  quickQuestion: {
+    keywords: [
+      "preguntame algo"
+    ],
+    type: "string",
+    responses: ["pregunta"]
+  },
+  quickQuestionFollowing: {
+    references: ["quickQuestion"],
+    keywords: ["cuentame otro"],
+    type: "string",
+    responses: ["otra pregunta"]
+  },
   fallback: "No lo he entendido. Podrías repetirlo de nuevo?"
 };

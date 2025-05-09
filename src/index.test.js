@@ -35,14 +35,29 @@ describe("Palathea", () => {
       expect(intents.whatDayIsIt.responses).to.include(result.content);
     });
 
-    test.only("from an intent with context", async () => {
+    test("from an intent with references", async () => {
+      await assistant.reply("cuentame un chiste");
+      const followingReply = await assistant.reply("cuentame otro");
+
+      await assistant.reply("preguntame algo");
+      const followingReplyToQuestion = await assistant.reply("cuentame otro");
+
+      await assistant.reply("cuentame un chiste");
+      const shouldFail = await assistant.reply("cuentame otro");
+
+      expect(intents.jokeFollowingTest.responses).to.include(followingReply.content)
+      expect(intents.quickQuestionFollowing.responses).to.include(followingReplyToQuestion.content)
+      expect(intents.quickQuestionFollowing.responses).not.to.include(shouldFail.content);
+    })
+
+    test("from an intent with context", async () => {
       const input = "Cómo cocino una receta de tortilla de patatas?";
       const result = await assistant.reply(input);
 
       expect(result).toStrictEqual(
         await handlerWrapper(handlers[intents.howCanICook.handler], {
           relatedCategories: ["foods"],
-          tokens: { foods: ["tortilla de patatas"] },
+          tokens: { foods: [{ value: "tortilla de patatas", rating: 1 }] },
         }),
       );
     });
