@@ -35,6 +35,18 @@ describe("Palathea", () => {
       expect(intents.whatDayIsIt.responses).to.include(result.content);
     });
 
+    test.only("from an intent with context", async () => {
+      const input = "Cómo cocino una receta de tortilla de patatas?";
+      const result = await assistant.reply(input);
+
+      expect(result).toStrictEqual(
+        await handlerWrapper(handlers[intents.howCanICook.handler], {
+          relatedCategories: ["foods"],
+          tokens: { foods: ["tortilla de patatas"] },
+        }),
+      );
+    });
+
     test("from an intent simple response after failing to execute its handler", async () => {
       const input = "cuentame un chiste";
       const result = await assistant.reply(input);

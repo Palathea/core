@@ -7,5 +7,8 @@ export default {
         "viernes",
         "sabado",
         "domingo"
+    ],
+    foods: [
+        "tortilla de patatas"
     ]
 }

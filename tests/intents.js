@@ -21,6 +21,14 @@ export default {
     type: "string",
     responses: ["This is not a test"]
   },
+  howCanICook: {
+    keywords: [
+      "Cómo puedo cocinar una receta de",
+      "Cómo se cocina un plato de"
+    ],
+    type: "string",
+    handler: "howToCookHandler"
+  },
   greeting: {
     keywords: [
       ["buenos", "dias"],
