@@ -162,7 +162,7 @@ const initialize = (intents, handlers, dictionaries = {}) => {
         const selectedIntent = intents[mostRatedIntent.id];
 
         return {
-          type: selectedIntent.type,
+          type: selectedIntent.type ?? "string",
           content: selectedIntent.responses.at(
             Math.floor(Math.random() * selectedIntent.responses.length),
           ),
