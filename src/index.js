@@ -79,7 +79,7 @@ const getContext = (input, dictionaries) => {
   for (const { entryName, value } of entries) {
     for (const [index, inputToken] of splittedInput.entries()) {
       const valueLength = value.split(" ").length;
-      const fullToken = splittedInput.slice(index, valueLength);
+      const fullToken = splittedInput.slice(index, valueLength).join(" ");
 
       if (stringSimilarity(fullToken, formatToStandard(value)) > 0.8) {
         context.tokens[entryName] = [...context.tokens[entryName] ? context.tokens[entryName] : [], value]
